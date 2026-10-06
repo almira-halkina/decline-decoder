@@ -1,0 +1,49 @@
+[project]
+name = "decline-decoder"
+version = "0.1.0"
+description = "Explains failed Stripe payments in plain language, grounded in Stripe's decline-code docs."
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "anthropic>=1.0",
+    "fastapi>=0.115",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "stripe>=12.0",
+    "uvicorn[standard]>=0.32",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28",  # FastAPI TestClient
+    "mypy>=1.13",
+    "pytest>=8.3",
+    "ruff>=0.8",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = [".", "../scripts", "../evals"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF"]
+ignore = ["S101"]  # assert is fine in tests and scripts
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S105", "S106"]  # fake secrets in tests
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["stripe.*"]
+ignore_missing_imports = true

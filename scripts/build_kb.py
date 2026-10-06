@@ -27,8 +27,8 @@ Derived fields (rules below are the ONLY interpretation layer; everything else i
                                                    as-is (processing_error, issuer_not_available…)
                           "after_customer_action"  retry only after the customer fixes details
                                                    or authenticates (incorrect_cvc, 3DS, PIN…)
-                          "no"                     contact issuer / use another card / anything else,
-                                                   and every concealed (fraud-related) code.
+                          "no"                     contact issuer / use another card / anything
+                                                   else, and every concealed (fraud-related) code.
   retry_basis           the phrase that triggered the rule, so each value is auditable.
 
 The "Local payment method decline codes" table is intentionally excluded: the demo only takes
@@ -64,8 +64,9 @@ DOCS_CONCEAL_PATTERN = re.compile(r"present it (in the same manner )?as `generic
 
 
 def fetch(url: str) -> str:
-    req = urllib.request.Request(url, headers={"Accept-Language": "en-US,en;q=0.9"})
-    with urllib.request.urlopen(req, timeout=30) as resp:  # noqa: S310 (fixed https URL)
+    # S310: url is the fixed https SOURCE_URL constant.
+    req = urllib.request.Request(url, headers={"Accept-Language": "en-US,en;q=0.9"})  # noqa: S310
+    with urllib.request.urlopen(req, timeout=30) as resp:  # noqa: S310
         return str(resp.read().decode("utf-8"))
 
 
@@ -75,7 +76,7 @@ def clean(cell: str) -> str:
     # Glossary pop-ups render as "*term* (long definition with (nested) parens)".
     text = re.sub(r"\*([^*]+)\* \((?:[^()]|\([^()]*\))*\)", r"\1", text)
     text = re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", text)  # [label](url) -> label
-    text = text.replace("&nbsp;", " ").replace("’", "'")
+    text = text.replace("&nbsp;", " ").replace(chr(0x2019), "'")  # curly apostrophe
     return re.sub(r"\s+", " ", text).strip()
 
 
