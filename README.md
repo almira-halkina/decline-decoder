@@ -1,5 +1,7 @@
 # Decline Decoder
 
+[![CI](https://github.com/almira-halkina/decline-decoder/actions/workflows/ci.yml/badge.svg)](https://github.com/almira-halkina/decline-decoder/actions/workflows/ci.yml)
+
 **Plain-language explanations for failed Stripe payments, grounded in Stripe's own docs.**
 
 When a card payment fails, Stripe returns a code like `card_velocity_exceeded` or
