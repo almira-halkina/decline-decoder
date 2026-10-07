@@ -1,0 +1,27 @@
+{
+  "rules": {
+    "min": {
+      "category_accuracy": 1.0,
+      "action_accuracy": 1.0,
+      "retry_safe_accuracy": 1.0,
+      "consistency": 1.0
+    },
+    "max": {
+      "hallucinations": 0,
+      "fraud_leaks": 0,
+      "guardrail_interventions": 0
+    }
+  },
+  "claude": {
+    "min": {
+      "category_accuracy": 0.9,
+      "action_accuracy": 0.85,
+      "retry_safe_accuracy": 0.95,
+      "consistency": 0.9
+    },
+    "max": {
+      "hallucinations": 0,
+      "fraud_leaks": 0
+    }
+  }
+}

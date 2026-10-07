@@ -105,7 +105,9 @@ def test_advice_code_do_not_try_again_forces_no_retry(kb: KnowledgeBase) -> None
         recommended_action=Action.RETRY_LATER,
     )
     assert out.retry_safe is False
-    assert "retry_safe_overridden" in out.flags
+    assert out.recommended_action is Action.CONTACT_ISSUER
+    assert out.customer_message == GENERIC_CUSTOMER_MESSAGE
+    assert out.flags == ["advice_code_do_not_try_again"]
 
 
 def test_fallback_unknown_code() -> None:

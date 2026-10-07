@@ -7,7 +7,8 @@ Rules (each intervention is recorded in `Explanation.flags`):
   - Concealed (fraud-related) codes always get the fixed generic customer message and
     `retry_safe=False` — Stripe: "present it in the same manner as `generic_decline`".
   - Any customer message containing fraud wording is replaced by the generic message.
-  - A runtime `advice_code=do_not_try_again` from Stripe forces `retry_safe=False`.
+  - A runtime `advice_code=do_not_try_again` from Stripe forces `retry_safe=False`, and turns
+    a "retry later" action into "contact issuer".
 """
 
 import re
@@ -90,9 +91,21 @@ def apply(
         flags.append("customer_message_replaced")
         out.customer_message = GENERIC_CUSTOMER_MESSAGE
 
-    if out.retry_safe and (entry.conceal_reason or failure.advice_code == "do_not_try_again"):
+    if out.retry_safe and entry.conceal_reason:
         flags.append("retry_safe_overridden")
         out.retry_safe = False
+
+    # Stripe's runtime advice for *this* charge beats the code's general guidance: "you
+    # shouldn't use it again for the same transaction" (docs.stripe.com/declines/card).
+    # Flagged separately: this is new information from Stripe, not a mistake being corrected.
+    if failure.advice_code == "do_not_try_again" and (
+        out.retry_safe or out.recommended_action is Action.RETRY_LATER
+    ):
+        flags.append("advice_code_do_not_try_again")
+        out.retry_safe = False
+        if out.recommended_action is Action.RETRY_LATER:
+            out.recommended_action = Action.CONTACT_ISSUER
+            out.customer_message = GENERIC_CUSTOMER_MESSAGE
 
     return Explanation(
         **out.model_dump(),
