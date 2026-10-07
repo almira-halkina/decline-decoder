@@ -81,7 +81,7 @@ def explain(failure: FailurePayload, service: ServiceDep) -> Explanation:
 
 @app.post("/checkout")
 def create_checkout_session(settings: SettingsDep, client: StripeDep) -> dict[str, str]:
-    session = client.checkout.sessions.create(
+    session = client.v1.checkout.sessions.create(
         params={
             "mode": "payment",
             "line_items": [
