@@ -12,10 +12,13 @@ send the customer. Every answer is built from Stripe's official
 reason, never shows a different code than Stripe returned, and never tells a customer their card
 was flagged for fraud.
 
-**Live demo:** _add your Render URL here_ · runs in Stripe **test mode** only.
+**Live demo:** [decline-decoder-web.onrender.com](https://decline-decoder-web.onrender.com)
+([dashboard](https://decline-decoder-web.onrender.com/#/dashboard)) · Stripe **test mode** only ·
+hosted on Render's free plan, so the first load after a quiet spell can take up to a minute.
 
-<!-- Record a ~30 s GIF: store → Pay → decline card → dashboard. Save as docs/demo.gif. -->
-![Demo](docs/demo.gif)
+<!-- Record a ~30 s GIF (store -> Pay -> decline card -> dashboard), save it as docs/demo.gif,
+     then uncomment the next line. -->
+<!-- ![Demo](docs/demo.gif) -->
 
 ---
 
