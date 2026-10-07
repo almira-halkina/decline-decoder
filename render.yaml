@@ -1,0 +1,32 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+# Creates the API (Docker) and the dashboard (static site) on the free plan.
+# Values marked `sync: false` are entered in the Render dashboard, never committed.
+services:
+  - type: web
+    name: decline-decoder-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /health
+    envVars:
+      - key: STRIPE_SECRET_KEY # sk_test_...
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET # whsec_... from the Stripe Dashboard webhook endpoint
+        sync: false
+      - key: FRONTEND_URL # e.g. https://decline-decoder-web.onrender.com (no trailing slash)
+        sync: false
+      - key: EXPLAINER_ENGINE
+        value: rules
+      - key: DATABASE_PATH # free instances have no persistent disk; data resets on restart
+        value: /tmp/decline_decoder.sqlite3
+
+  - type: web
+    name: decline-decoder-web
+    runtime: static
+    rootDir: ./frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_URL # e.g. https://decline-decoder-api.onrender.com
+        sync: false
