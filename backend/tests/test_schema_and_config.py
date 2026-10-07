@@ -31,7 +31,7 @@ def test_llm_output_schema_lists_enums_for_structured_output() -> None:
 
 
 def test_explanation_serialises_enums_as_strings() -> None:
-    exp = Explanation(**make_output().model_dump(), grounded=True)
+    exp = Explanation(**make_output().model_dump(), grounded=True, engine="rules")
     assert exp.model_dump(mode="json")["category"] == "insufficient_funds"
 
 

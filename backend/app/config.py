@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     stripe_publishable_key: str = ""
     stripe_webhook_secret: str = ""
 
+    # "rules" (default): keyword rules over Stripe's docs text, no LLM.
+    # "claude": Claude writes the explanation; rules are the fallback if a call fails.
+    explainer_engine: Literal["rules", "claude"] = "rules"
     anthropic_api_key: str = ""
     explainer_model: str = "claude-opus-5-5"
     explainer_effort: Effort = "low"

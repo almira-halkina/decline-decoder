@@ -11,6 +11,7 @@ Rules (each intervention is recorded in `Explanation.flags`):
 """
 
 import re
+from typing import Literal
 
 from app.kb import KBEntry
 from app.schemas import Action, Category, Explanation, FailurePayload, LLMExplanation
@@ -38,9 +39,20 @@ def first_sentences(text: str, n: int) -> str:
     return " ".join(_SENTENCE_END.split(text.strip())[:n])
 
 
+def _own_sentences(text: str, code: str) -> list[str]:
+    """Docs sentences that don't name a different code (e.g. "Related to `other_code`.")."""
+    return [
+        s
+        for s in _SENTENCE_END.split(text.strip())
+        if all(c == code for c in re.findall(r"`([a-z0-9_]+)`", s))
+    ]
+
+
 def kb_merchant_text(entry: KBEntry) -> str:
     """Two-sentence merchant explanation built straight from the docs entry."""
-    return f"{entry.description} {first_sentences(entry.next_steps, 1)}"
+    description = _own_sentences(entry.description, entry.code)[:1]
+    next_step = _own_sentences(entry.next_steps, entry.code)[:1]
+    return " ".join(description + next_step)
 
 
 def apply(
@@ -49,6 +61,8 @@ def apply(
     key: str,
     entry: KBEntry,
     known_codes: frozenset[str],
+    engine: Literal["rules", "claude"],
+    basis: list[str] | None = None,
 ) -> Explanation:
     flags: list[str] = []
     out = raw.model_copy()
@@ -80,7 +94,14 @@ def apply(
         flags.append("retry_safe_overridden")
         out.retry_safe = False
 
-    return Explanation(**out.model_dump(), grounded=True, flags=flags, doc_url=entry.doc_url)
+    return Explanation(
+        **out.model_dump(),
+        grounded=True,
+        engine=engine,
+        basis=basis or [],
+        flags=flags,
+        doc_url=entry.doc_url,
+    )
 
 
 def fallback_unknown(key: str | None) -> Explanation:
@@ -105,25 +126,6 @@ def fallback_unknown(key: str | None) -> Explanation:
         retry_safe=False,
         source_code=key,
         grounded=False,
+        engine="none",
         flags=[flag],
-    )
-
-
-def fallback_from_kb(key: str, entry: KBEntry, flag: str) -> Explanation:
-    """Rule-based response straight from the docs entry, used when the LLM is unavailable."""
-    action = {
-        "same_details": Action.RETRY_LATER,
-        "after_customer_action": Action.ASK_NEW_PAYMENT_METHOD,
-        "no": Action.DO_NOT_RETRY if entry.conceal_reason else Action.CONTACT_ISSUER,
-    }[entry.retry_policy]
-    return Explanation(
-        category=Category.FRAUD_SUSPECTED if entry.conceal_reason else Category.OTHER,
-        merchant_explanation=kb_merchant_text(entry),
-        recommended_action=action,
-        customer_message=GENERIC_CUSTOMER_MESSAGE,
-        retry_safe=entry.retry_policy == "same_details",
-        source_code=key,
-        grounded=True,
-        flags=[flag],
-        doc_url=entry.doc_url,
     )

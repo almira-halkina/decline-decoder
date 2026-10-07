@@ -12,7 +12,7 @@ def run(kb: KnowledgeBase, failure: FailurePayload, **overrides: object) -> Expl
     assert key is not None
     entry = kb.get(key)
     assert entry is not None
-    return guardrails.apply(make_output(**overrides), failure, key, entry, kb.codes)
+    return guardrails.apply(make_output(**overrides), failure, key, entry, kb.codes, "claude")
 
 
 def test_clean_output_passes_unchanged(kb: KnowledgeBase) -> None:
@@ -121,13 +121,3 @@ def test_fallback_missing_code() -> None:
     out = guardrails.fallback_unknown(None)
     assert out.source_code is None
     assert out.flags == ["missing_code"]
-
-
-def test_fallback_from_kb_is_grounded_and_safe(kb: KnowledgeBase) -> None:
-    entry = kb.get("stolen_card")
-    assert entry is not None
-    out = guardrails.fallback_from_kb("stolen_card", entry, "llm_unavailable")
-    assert out.category is Category.FRAUD_SUSPECTED
-    assert out.recommended_action is Action.DO_NOT_RETRY
-    assert out.customer_message == GENERIC_CUSTOMER_MESSAGE
-    assert out.grounded is True

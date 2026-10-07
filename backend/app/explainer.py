@@ -7,7 +7,7 @@ from typing import Protocol
 import anthropic
 from anthropic.types import OutputConfigParam
 
-from app import guardrails
+from app import guardrails, rules
 from app.config import Effort
 from app.kb import KBEntry, KnowledgeBase, lookup_key
 from app.sanitize import to_llm_view
@@ -118,11 +118,20 @@ class ExplainService:
         entry = self._kb.get(key)
         if key is None or entry is None:
             return guardrails.fallback_unknown(key), None
-        if self._llm is None:
-            return guardrails.fallback_from_kb(key, entry, "llm_unavailable"), None
-        try:
-            raw = self._llm.explain(to_llm_view(failure), entry, key)
-        except (ExplainerError, anthropic.APIError) as exc:
-            log.warning("LLM explanation failed for %s: %s", key, exc)
-            return guardrails.fallback_from_kb(key, entry, "llm_error"), None
-        return guardrails.apply(raw, failure, key, entry, self._kb.codes), raw
+        if self._llm is not None:
+            try:
+                raw = self._llm.explain(to_llm_view(failure), entry, key)
+            except (ExplainerError, anthropic.APIError) as exc:
+                log.warning("LLM explanation failed for %s, using rules: %s", key, exc)
+            else:
+                return guardrails.apply(raw, failure, key, entry, self._kb.codes, "claude"), raw
+            result = self._explain_with_rules(failure, key, entry)
+            result.flags.append("llm_error")
+            return result, None
+        return self._explain_with_rules(failure, key, entry), None
+
+    def _explain_with_rules(self, failure: FailurePayload, key: str, entry: KBEntry) -> Explanation:
+        # Rules output still goes through the guardrails, which also covers the runtime
+        # advice_code check (e.g. Stripe saying do_not_try_again for this particular charge).
+        explanation, basis = rules.explain(entry, key)
+        return guardrails.apply(explanation, failure, key, entry, self._kb.codes, "rules", basis)

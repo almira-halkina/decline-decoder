@@ -45,6 +45,7 @@ def test_explain_returns_validated_explanation(client: TestClient) -> None:
     assert body["recommended_action"] == "ask_new_payment_method"
     assert body["source_code"] == "insufficient_funds"
     assert body["grounded"] is True
+    assert body["engine"] == "claude"
 
 
 def test_llm_sees_only_allowlisted_fields(client: TestClient, fake_llm: FakeLLM) -> None:
@@ -88,12 +89,15 @@ def test_llm_failure_falls_back_to_docs(kb: KnowledgeBase) -> None:
     service = ExplainService(kb, FakeLLM(ExplainerError("stop_reason=refusal")))
     out = service.explain(FakeFailure.insufficient())
     assert out.flags == ["llm_error"]
+    assert out.engine == "rules"
     assert out.grounded is True
 
 
-def test_no_api_key_uses_rule_based_fallback(kb: KnowledgeBase) -> None:
+def test_without_llm_the_rules_engine_answers(kb: KnowledgeBase) -> None:
     out = ExplainService(kb, None).explain(FakeFailure.insufficient())
-    assert out.flags == ["llm_unavailable"]
+    assert out.engine == "rules"
+    assert out.flags == []
+    assert out.category == "insufficient_funds"
 
 
 def test_scrub_redacts_card_numbers_and_emails() -> None:

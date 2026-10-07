@@ -19,7 +19,9 @@ log = logging.getLogger("decline_decoder")
 def get_explain_service() -> ExplainService:
     settings = get_settings()
     llm = None
-    if settings.anthropic_api_key:
+    if settings.explainer_engine == "claude":
+        if not settings.anthropic_api_key:
+            raise RuntimeError("EXPLAINER_ENGINE=claude requires ANTHROPIC_API_KEY")
         client = anthropic.Anthropic(api_key=settings.anthropic_api_key, timeout=30.0)
         llm = ClaudeExplainer(client, settings.explainer_model, settings.explainer_effort)
     return ExplainService(get_kb(), llm)

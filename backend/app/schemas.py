@@ -1,6 +1,7 @@
 """Request/response models. The LLM never sees anything outside `LLMFailureView`."""
 
 from enum import StrEnum
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -75,5 +76,9 @@ class Explanation(LLMExplanation):
     """What the API returns: the validated explanation plus provenance."""
 
     grounded: bool = Field(description="True if a knowledge-base entry backed this explanation.")
+    engine: Literal["rules", "claude", "none"] = Field(
+        description="What produced the labels: keyword rules, Claude, or nothing (unknown code)."
+    )
+    basis: list[str] = Field(default_factory=list, description="Rules that fired (rules engine).")
     flags: list[str] = Field(default_factory=list, description="Guardrail interventions, if any.")
     doc_url: str | None = None
