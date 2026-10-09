@@ -4,6 +4,8 @@
 
 **Plain-language explanations for failed Stripe payments, grounded in Stripe's own docs.**
 
+**▶ Live dashboard: [decline-decoder-web.onrender.com](https://decline-decoder-web.onrender.com/)** (free hosting: the first load can take 30–60 seconds while it wakes up)
+
 When a card payment fails, Stripe returns a code like `card_velocity_exceeded` or
 `do_not_honor`. Decline Decoder turns each failure into what a merchant actually needs: a
 two-sentence explanation, the next step, whether a retry can help, and a polite message to
